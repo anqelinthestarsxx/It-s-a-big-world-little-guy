@@ -25,8 +25,6 @@ define puppy_name = "Puppy" #tbd2
 init python:
     import math
 
-from profiling.tracing import label
-
     THEO_SPEED = 250.0
     ROOM_LEFT = 320
     ROOM_RIGHT = 1600
@@ -98,6 +96,25 @@ transform flip(f):
     xzoom f
     xalign 0.5
 
+transform theo_spot:
+    xpos 960
+    ypos 900
+    anchor (0.5, 1.0)
+
+transform fade_to_muted:
+    xalign 0.5
+    matrixcolor SaturationMatrix(1.0)
+    linear 2.5 matrixcolor SaturationMatrix(0.15)
+
+transform muted_room:
+    xalign 0.5
+    matrixcolor SaturationMatrix(0.15)
+
+transform outro_spot:
+    xpos 960
+    ypos 900
+    anchor (0.5, 1.0)
+
 screen test_room():
 
     add Solid("#000000")
@@ -166,6 +183,7 @@ label pancakes:
     tess "Only the best for the best little brother"
     t "Thankuuu!"
     tess "Okay, shoes on my little sidekick! Time for school."
+    tess "Mom and Dad left early again today, so it's just us!"
     jump outside
 
 label outside:
@@ -173,9 +191,24 @@ label outside:
     scene black with fade
     t "The world is BIG, Tessa!"
     tess "It sure is, little guy. But I'll always be right here."
+    tess "Okay, hold on. Let me fix your jacket.."
+    t "I can do it!"
+    tess "I know you can. I'm just checking."
+    tess "Lunch is in your bag. Bunny's in there too, but don't tell Ms. Rosie."
+    t "Bunny's comng to SCHOOL?!"
+    tess "It's a special day. Special days get special rules."
+    tess "You've got a minute before the bell. Go look around, okay? I'll be right here."
     #TO DO: EXPLORATION - Exploration outside of the school, timed (60-120s)
+    tess "Theo! Bell's ringing!"
+    t "Coming!!"
     tess "Have the best day. I'll see you after school, okay?"
     t "Bye Tessa!! I'm gonna be the best-est four!"
+    tess "You already are, kid"
+    t "..."
+    t "Tessa?"
+    tess "Yes, Theo?"
+    t "You're my favorite."
+    tess "... You're mine, too.. Go on.."
     jump preschool
 
 label preschool:
@@ -187,10 +220,15 @@ label preschool:
     kid_ruby "Happy birthday, Theo!"
     kid_sunny "Hehehe, happy birthday!"
     t "I'm FOUR!! My sister's a superhero!"
-    teacher "Tessa? What's her superhero name?"
+    teacher "Is she? What's her superhero name?"
     t "Captain Cookie!!"
+    kid_penny "That's not a real superhero."
+    t "Yes it is, she's the best one."
     kid_max "... I have a pet rock."
     teacher "Thank you, Max."
+    teacher "Theo.. is that a bunny peeking out of your bag?"
+    t "Shhhh! Tessa said it's a special day. Special days get special rules!"
+    teacher "... That is a very good special rule then."
     #TO DO: MINIGAME - LEARNING TIME
     jump lunch
 
@@ -198,7 +236,11 @@ label lunch:
     #===== ACT IV-B: Lunchtime! =====
     teacher "Lunchtime, everyone! And look, Theo, someone sent a cupcake!"
     t "A birthday cupcake!? At SCHOOL?!"
-    t "Thank you!"
+    teacher "There's a note on it! 'Happy Birthday, sidekick."
+    t "Sidekick? That's me!"
+    t "TESSA made it!!"
+    kid_blue "Your sister is so cool."
+    t "I KNOW!"
     kid_oliver "Is there pizza too?"
     kid_penny "Oliver, you can't have pizza at lunch. It's a rule."
     kid_oliver "... Is there any pizza?"
@@ -212,6 +254,10 @@ label naptime:
     t "But I'm not sleepy.. I'm just resting my eyes..."
     teacher "Shhh you guys.. Theo's resting his eyes.."
     t "Shhh.. I'm resting my eyes.."
+    t "..."
+    t "Tessa's picking me up after school."
+    t "She always does.."
+    teacher "Sweet dreams, Theo."
     #TO DO: MINIGAME - NAPTIME
     jump snow_day
 
@@ -225,9 +271,14 @@ label snow_day:
     kid_ruby "I'm in charge of the blocks!"
     kid_blue "Someone come build a fort with me!"
     t "The whole classroom is a playground!"
+    t "That pillow is a mountain! That table is a CAVE."
+    kid_sunny "Hehehehe, a cave!"
     kid_iris "... I made you something theo.."
     t "A drawing?! Is that me and Tessa?"
     kid_iris "... Yes.."
+    t "She's got a cape!"
+    kid_iris "...She's a superhero."
+    t "I'm putting it on my wall. Thank you, Iris!"
     #TO DO: MINIGAME - SNOW DAY INDOOR PLAY
     jump pickup
 
@@ -242,12 +293,17 @@ label pickup:
     t "He's my best friend, besides tessa!"
     tess "He wanted to be the first to wish you a happy birthday!"
     t "Hi [husky_name]! So fluffy!!"
-    #TO DO: Minigame - playing with fluffy for the first time
+    #TO DO: Minigame - playing with the husky  for the first time
+    t "Tessa, did you see? He missed me!"
+    tess "Of course he did. Everybody does."
     t "The best day ever is getting even bester!"
+    jump getting_ready
 
 label getting_ready:
     scene black with fade
     tess "Go change into your birthday outfit! I'll be right here!"
+    t "What outfit?"
+    tess "It's on your bed. It's got something extra special on it."
     #TODO: Exploration, bedroom again but husky follows theo
     #TODO minigame - timed play w husky
     #TODO dresser interaction (aka continue)
@@ -255,16 +311,22 @@ label getting_ready:
 
     t "Tessa, look! I'm the birthday boy! It says so!"
     t "[husky_name]! look! Do I look fancy?"
-    tess "You look perfect, come on, let's go downstairs!"
-    jump party:
+    tess "You look perfect."
+    t "Are you coming too?"
+    tess "Always. Okay, close your eyes, I'll lead you downstairs."
+    t "Why?"
+    tess "No questions, buddy,"
+    jump party
 
 label party:
     scene black with fade
     kids "SURPRISE!!"
     t "WHAT?! Everybody's here!"
-    mom "Happy birthday, sweet boy!"
+    mom "Happy birthday, sweet boy! Sorry we're late, work ran long."
     dad "Four years old! You're getting too big!"
     t "I'm still little, Dad. The world is big."
+    dad "Tessa, you did all this? You're a lifesaver."
+    tess "It was nothing. Go have fun, Theo."
     kid_oliver "PIZZA!"
     kid_penny "We have to sing first. That's the rule."
     # TODO: MINIGAME - party games (musical chairs, pin the tail, etc.)
@@ -273,6 +335,8 @@ label party:
     kids "Happy birthday to you, happy birthday to you..."
     kids "Happy birthday, dear Theo, happy birthday to you!"
     t "I'm gonna burst."
+    t "Tessa, did you see?! They sang to ME!"
+    tess "I saw, little guy. Make a wish."
 
     # TODO: EXPLORATION - playing in the snow with friends (and the husky!)
     kid_fern "Look, Theo! A snow angel!"
@@ -289,9 +353,9 @@ label party:
     mom "Here's from me and Dad, sweetheart."
     t "Thank you for my presents! Thank you, thank you!"
     t "..."
+    t "Tessa's been cleaning up this whole time.."
     t "Wait. Where's Tessa's present?"
     t "Maybe she forgot..."
-    # (Keep this beat quiet and short. This is the little-sad moment.)
 
     # ===== ACT IX: Hot cocoa =====
 label cocoa:
@@ -300,15 +364,25 @@ label cocoa:
     kid_oliver "Marshmallows!"
     t "Marshmallows!"
     kid_penny "You have to wait until it cools. It's a rule."
-    tess "Theo, I'll be right back, okay? Don't go anywhere."
+    "Tessa checks her phone."
+    tess "Save me one, okay? I'll be right back."
+    t "Where are you going?"
+    tess "Just something I forgot. Don't go anywhere."
     t "Okay..."
-    t "Where's Tessa going?"
+    t "..."
+    t "She forgot something? On MY birthday?"
+    kid_fern "Maybe it's a surprise."
+    t "...Maybe."
+    jump real_present
 
     # ===== ACT X: The real present =====
 label real_present:
     scene black with fade
     tess "Okay, close your eyes. No peeking, sidekick."
     t "I'm not peeking!"
+    tess "Are you sure?"
+    t "... Maybe a little peeking."
+    tess "Ha! Knew it! Okay, now really close them tight."
     tess "Open them."
     t "A... BOX?"
     t "..."
@@ -316,7 +390,15 @@ label real_present:
     t "TESSA. IT'S A SECOND PUPPY?! I have TWO dogs now!!"
     kid_sunny "Hehehe, PUPPY!"
     kid_fern "Aww, he's so tiny..."
+    t "You didn't forget!"
+    tess "I'd never forget, buddy, I just had to pick him up from the shelter."
+    t "Was he scared?"
+    tess "A little.. but he's with us now."
+    t "The world is a little scary."
+    t "...But not when somebody's with you."
+    tess "..."
     tess "Happy birthday, little guy."
+    jump thank_you
 
     # ===== ACT XI: Thank you, Captain Cookie =====
 label thank_you:
@@ -331,6 +413,9 @@ label thank_you:
     t "Look, [husky_name] and [puppy_name] are best friends already!"
     t "Thank you Tess!! You're the best!!"
     tess "...Anytime, kid."
+    mom "Tessa, honey, can you get Theo to bed? We're wiped."
+    tess "Of course, Mom. I'll take care of him."
+    jump goodnight
 
     # ===== ACT XII: Goodnight, little guy =====
 label goodnight:
@@ -345,12 +430,28 @@ label goodnight:
     # ===== ACT XIII: Tessa's world =====
 label tessa_world:
     scene black with fade
-    # TODO: EXPLORATION (optional) - Tessa walks to her own room (muted colors)
-    # PLACEHOLDER: Tessa's real reason is still undecided
+    scene theo-room at muted_room with dissolve
+
+    "..."
+    "Tessa closes her door softly, so she doesn't wake him."
+    tess "Okay.. Lunch for tomorrow. Puppy food. Permission slip."
     tess "..."
-    tess "I'm glad he had a good day."
-    tess "That's the part that matters."
+    tess "Mom and dad were really happy tonight.."
+    tess "That's good. They're good at parties."
+    tess "They love him. I know they do.."
+    tess "But they're not the ones who know he needs the hall light on."
+    tess "Or that the bunny goes in the wash on Sundays, when he isnt paying attention."
     tess "..."
+    tess "It's okay."
+    tess "I used to be the one who got surprised on my birthday.."
+    tess "It's okay."
+    tess "It's okay.. I'm not mad.. I'm just.. tired.."
+    tess "..."
+    tess "He said I'm the best."
+    tess "'You're the best, Tess!'"
+    tess "I think that's enough to keep going."
+    tess "The world is really big. And someone has to make it feel a little smaller for him."
     tess "Goodnight, little guy."
 
-    return
+    scene black with fade
+    "It's a big world, Little Guy.."
