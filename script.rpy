@@ -4,6 +4,31 @@ default target_x = 960.0
 default target_y=800.0
 default theo_facing = 1.0
 default theo_moving = False
+default explore_time = 0.0
+default explore_limit = 90.0
+default bedroom_done = False
+default room_left = 320
+default room_right = 1600
+image bg_outside=Solid("#cfe8ff")
+
+define BEDROOM_SPOTS = [
+    ("window", 700, 330, "obj_placeholder", "look_window"),
+    ("dresser", 1240, 560, "obj_dresser", "look_dresser"),
+    ("bed", 480, 700, "obj_placeholder", "look_bed"),
+    ("dogbed", 900, 900, "obj_placeholder", "look_dogbed"),
+    ("toybox", 1400, 900, "obj_placeholder", "look_toybox"),
+    ("nightlight", 1100, 480, "obj_placeholder", "look_nightlight"),
+    ("photo", 1450, 340, "obj_placeholder", "look_photo"),
+]
+
+define OUTSIDE_SPOTS = [
+    ("snowman", 500, 800, "obj_placeholder", "look_snowman"),
+    ("bird", 1000, 600, "obj_placeholder", "look_bird"),
+    ("puddle", 1400, 900, "obj_placeholder", "look_puddle"),
+    ("bus", 1800, 800, "obj_placeholder", "look_bus"),
+    ("school", 300, 600, "obj_placeholder", "look_school"),
+    ("tessa", 960, 950, "obj_placeholder", "look_tessa"),
+]
 
 define t = Character("Theo", color="#786cad")
 define tess = Character("Tessa", color="#e794bd")
@@ -36,7 +61,7 @@ init python:
 
     def set_target():
         x, y = renpy.get_mouse_pos()
-        x = clamp(x, ROOM_LEFT + 48, ROOM_RIGHT - 48)
+        x = clamp(x, store.room_left + 48, store.room_right - 48)
         y = clamp(y, FLOOR_TOP, FLOOR_BOTTOM)
         if x < store.theo_x - 10:
             store.theo_facing = -1.0
@@ -48,6 +73,7 @@ init python:
        
 
     def update_theo():
+        store.explore_time += 0.02
         dx = store.target_x - store.theo_x
         dy = store.target_y - store.theo_y
         dist = math.hypot(dx, dy)
@@ -147,6 +173,58 @@ screen test_room():
 
     timer 0.02 repeat True action Function(update_theo)
 
+screen explore_scene(bg, spots):
+    add Solid("#000000")
+    add bg:
+        xalign 0.5
+
+    button:
+        xysize (config.screen_width, config.screen_height)
+        background None
+        action Function(set_target)
+
+    for (name, x, y, img, lbl) in spots:
+        imagebutton:
+            idle img
+            pos (x, y)
+            anchor (0.5, 1.0)
+            focus_mask True
+            action Return(lbl)
+
+    fixed:
+        pos (int(theo_x), int(theo_y))
+        anchor (0.5, 1.0)
+        xysize (96, 192)
+        fixed:
+            xysize (96, 192)
+            at flip(theo_facing)
+            if theo_moving:
+                add "theo_walk"
+            else:
+                add "theo_idle"
+
+    timer 0.02 repeat True action Function(update_theo)
+
+    if explore_time >= explore_limit:
+        timer 0.01 action Return("done")
+
+label explore_outside:
+    $ explore_time = 0.0
+    $ explore_limit = 9999.0
+    $ room_left = 0
+    $ room_right = 1920
+    $ theo_x = 960
+    $ theo_y = 800
+
+label explore_outside_loop:
+    call screen explore_scene("bg_outside", OUTSIDE_SPOTS)
+
+    if _return == "done":
+        return
+
+    call expression _return
+    jump explore_outside_loop
+
 label start:
 
     #===== ACT I: Waking Up! =====
@@ -156,22 +234,25 @@ label start:
     tess "You sure are, kid! Go get ready for your big day, i'm making you a surprise~"
 
     $ explore_time = 0.0
+    $ explore_limit = 9999.0
+    $ bedroom_done = False
+    $ room_left = 320
+    $ room_right = 1600
+    $ theo_x = 960.0
+    $ theo_y = 800.0
+    $ target_x = 960.0
+    $ target_y = 800.0
 
-label bedroom_explore: 
-    call screen test_room
-
-    if _return == "drawers":
-        menu: 
-            "Get Dressed":
-                pass
-            "Keep exploring":
-                jump bedroom_explore
+label bedroom_loop:
+    call screen explore_scene("theo-room", BEDROOM_SPOTS)
+    call expression _return
+    if not bedroom_done:
+        jump bedroom_loop
 
     scene black with fade
-    # $ theo_outfit = "school"
+    # $theo_outfit = "school"
     tess "Come downstairs! It's breakfast time!"
     jump pancakes
-
 
 label pancakes:
     #===== ACT II: Birthday Pancakes! =====
@@ -198,7 +279,8 @@ label outside:
     t "Bunny's comng to SCHOOL?!"
     tess "It's a special day. Special days get special rules."
     tess "You've got a minute before the bell. Go look around, okay? I'll be right here."
-    #TO DO: EXPLORATION - Exploration outside of the school, timed (60-120s)
+    call explore_outside
+    scene black with fade
     tess "Theo! Bell's ringing!"
     t "Coming!!"
     tess "Have the best day. I'll see you after school, okay?"
@@ -455,3 +537,79 @@ label tessa_world:
 
     scene black with fade
     "It's a big world, Little Guy.."
+    return
+
+label look_snowman:
+    t "A snowman!! He's got a carrot nose!!"
+    t "He's HUGE. He's even bigger than tessa!"
+    return
+
+label look_bird:
+    t "Hi, birdie! Are you going to school too?"
+    t "... He's not saying anything."
+    return
+
+label look_puddle:
+    t "A puddle! It's frozen!"
+    t "Tessa says don't stomp on it. I'm not gonna stop."
+    t "... Just a little stomp.."
+    return
+
+label look_bus:
+    t "That bus is SO big. How do the wheels get that big?"
+    t "The world is BIG."
+    return
+
+label look_school:
+    t "That's my school. It's one of the biggest buildings I've ever seen!"
+    t "I'm gonna learn everything in there."
+    return
+
+label look_tessa:
+    t "Tessa's looking at her phone.."
+    t "...She looks tired. She's probably just thinking about breakfast."
+    return
+
+label look_dresser:
+    menu: 
+        "Get Dressed":
+            $ bedroom_done = True
+        "Keep exploring":
+            pass
+    return
+
+label look_window:
+    t "It's SNOWING!"
+    t "Everything's white. The whole world is like sugar!"
+    t "Maybe there'll be a snow day. Please, please, please.."
+    return
+
+label look_bed:
+    t "My bed! It's still warm."
+    t "Bunny's still sleeping. Shh.."
+    t "Tessa says I'm not allowed to jump on it..."
+    t "... Just one jump."
+    return
+
+label look_dogbed:
+    t "[husky_name]'s bed is empty."
+    t "He never misses my birthday!"
+    t "Tessa says he's busy. Dogs aren't busy."
+    return
+
+label look_toybox:
+    t "My toy box! It has trucks and blocks and a dinosaur."
+    t "The dinosaur only has one eye. He's the boss of everybody."
+    return
+
+label look_nightlight:
+    t "My moon nightlight!"
+    t "Tessa leaves the hall light on for me, too."
+    t "So the dark isn't scary."
+    return
+
+label look_photo:
+    t "That's me and Tessa!"
+    t "She's holding me up like a trophy."
+    t "I was SO tiny. Now I'm four!"
+    return
