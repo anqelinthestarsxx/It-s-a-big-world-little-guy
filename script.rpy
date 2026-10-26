@@ -10,6 +10,14 @@ default bedroom_done = False
 default room_left = 320
 default room_right = 1600
 image bg_outside=Solid("#cfe8ff")
+default snow_played = []
+image bg_snowyard = Solid('#e8f2ff')
+default lunch_played = []
+default recess_played = []
+image bg_lunch = Solid("#f5e6c8")
+image bg_classroom = Solid("#e8e0f5")
+default find_answer = 0
+default zone_center = 0.5
 
 define BEDROOM_SPOTS = [
     ("window", 700, 330, "obj_placeholder", "look_window"),
@@ -28,6 +36,43 @@ define OUTSIDE_SPOTS = [
     ("bus", 1800, 800, "obj_placeholder", "look_bus"),
     ("school", 300, 600, "obj_placeholder", "look_school"),
     ("tessa", 960, 950, "obj_placeholder", "look_tessa"),
+]
+
+define SNOW_SPOTS = [
+    ("snowangel", 400, 700, "obj_placeholder", "snow_angel"),
+    ("snowball", 800, 620, "obj_ placeholder", "snow_ball"),
+    ("fort", 1250, 700, "obj_placeholder", "snow_fort"),
+    ("snowdraw", 1600, 900, "obj_placeholder", "snow_draw"),
+    ("sled", 300, 950, "obj_placeholder", "snow_sled"),
+    ("husky", 960, 980, "obj_placeholder", "snow_husky"),
+    ("rockhunt", 1650, 650, "obj_placeholder", "snow_rocks"),
+]
+
+define GETTING_READY = BEDROOM_SPOTS + [
+    ("drawing", 1000, 340, "obj_placeholder", "look_drawing"),
+]
+
+define LUNCH_SPOTS = [
+    ("cupcake", 960, 700, "obj_placeholder", "lunch_cupcake"),
+    ("lunchbox", 500, 800, "obj_placeholder", "lunch_box"),
+    ("oliver", 1400, 800, "obj_placeholder", "lunch_oliver"),
+    ("milk", 700, 650, "obj_placeholder", "lunch_milk"),
+    ("rock", 1650, 700, "obj_placeholder", "lunch_rock"),
+    ("ruby", 300, 650, "obj_placeholder", "lunch_ruby"),
+]
+
+define RECESS_SPOTS = [
+    ("blocks", 500, 800, "obj_placeholder", "recess_blocks"),
+    ("fort", 1000, 750, "obj_placeholder", "recess_fort"),
+    ("mountain", 1450, 850, "obj_placeholder", "recess_mountain"),
+    ("cave", 1700, 700, "obj_placeholder", "recess_cave"),
+    ("coloring", 300, 650, "obj_placeholder", "recess_coloring"),
+    ("window", 900, 450, "obj_placeholder", "recess_window"),
+]
+
+define GETREADY_SPOTS = [s for s in BEDROOM_SPOTS if s[0] != "dogbed"] + [
+    ("husky", 850, 950, "obj_placeholder", "look_husky_play"),
+    ("drawing", 1000, 340, "obj_placeholder", "look_drawing"),
 ]
 
 define t = Character("Theo", color="#786cad")
@@ -208,9 +253,105 @@ screen explore_scene(bg, spots):
     if explore_time >= explore_limit:
         timer 0.01 action Return("done")
 
+screen tap_game(prompt, goal):
+    default taps = 0
+
+    add Solid("#00000099")
+
+    frame:
+        align (0.5, 0.5)
+        padding (50, 40)
+        vbox:
+            spacing 25
+            text prompt size 40 xalign 0.5
+            bar:
+                value ScreenVariableValue("taps", goal)
+                xsize 600
+                ysize 30
+                xalign 0.5
+            textbutton "TAP!":
+                xalign 0.5
+                text_size 60
+                action [SetScreenVariable("taps", taps + 1), If(taps +1 >= goal, Return(True))]
+
+label play_tap(prompt, goal=10):
+    call screen tap_game(prompt, goal)
+    return
+
+screen timing_game(prompt, lo, hi, speed):
+    default t_el = 0.0
+    $ marker = abs(((t_el * speed) % 2.0) - 1.0)
+
+    add Solid("#00000099")
+    frame:
+        align (0.5, 0.5)
+        padding (50, 40)
+        vbox:
+            spacing 25
+            text prompt size 40 xalign 0.5
+            fixed:
+                xsize 700
+                ysize 40
+                xalign 0.5
+                add Solid("#888888") xsize 700 ysize 40
+                add Solid("#5cb85c") xpos int(700 * lo) xsize int(700 * (hi - lo)) ysize 40
+                add Solid("#ffffff") xpos int(700 * marker) xsize 10 ysize 40
+            textbutton "NOW!":
+                xalign 0.5
+                text_size 60
+                action If(lo <= marker <= hi, Return(True), Notify("Almost! Try again!"))
+
+    timer 0.02 repeat True action SetScreenVariable("t_el", t_el + 0.02)
+
+screen find_game(prompt, n, answer):
+    add Solid("#00000099")
+    text prompt size 40 align (0.5, 0.15)
+    for i in range(n):
+        imagebutton:
+            idle "obj_placeholder"
+            pos (300 + i * 250, 600)
+            anchor (0.5, 0.5)
+            action If(i == answer, Return(True), Notify("Not here!"))
+
+screen catch_game(prompt, goal):
+    default hits = 0
+    default tx = 960
+    default ty = 600
+
+    add Solid("#00000099")
+    text prompt size 40 align (0.5, 0.1)
+    text "[hits] / [goal]" size 40 align (0.5, 0.18)
+
+    imagebutton:
+        idle "obj_placeholder"
+        pos (tx, ty)
+        anchor (0.5, 0.5)
+        action [SetScreenVariable("hits", hits + 1),
+                SetScreenVariable("tx", renpy.random.randint(300, 1500)),
+                SetScreenVariable("ty", renpy.random.randint(350, 850)),
+                If(hits + 1 >= goal, Return(True))]
+
+    timer 1.2 repeat True action [SetScreenVariable("tx", renpy.random.randint(300, 1500)),
+                                                SetScreenVariable("ty", renpy.random.randint(350, 850))]
+
+label play_timing(prompt, zone=0.2, speed=0.6):
+    $ zone_center = renpy.random.uniform(0.25, 0.75)
+    call screen timing_game(prompt, zone_center - zone / 2.0, zone_center + zone / 2.0, speed)
+    return
+
+label play_find(prompt, n=5):
+    $ find_answer = renpy.random.randint(0, n-1)
+    call screen find_game(prompt, n, find_answer)
+    return
+
+label play_catch(prompt, goal=5):
+    call screen catch_game(prompt, goal)
+    return
+
+
 label explore_outside:
     $ explore_time = 0.0
-    $ explore_limit = 9999.0
+    $ explore_limit = 15.0
     $ room_left = 0
     $ room_right = 1920
     $ theo_x = 960
@@ -327,8 +468,28 @@ label lunch:
     kid_penny "Oliver, you can't have pizza at lunch. It's a rule."
     kid_oliver "... Is there any pizza?"
     kid_sunny "Hehehe, pizza.."
-    #TO DO: MINIGAME - LUNCH TABLE
+    teacher "Go on, everyone. Eat up and have fun!"
+    call explore_lunch
+    scene black with fade
     jump naptime
+
+label explore_lunch:
+    $ explore_time = 0.0
+    $ explore_limit = 120.0
+    $ room_left = 0
+    $ room_right = 1920
+    $ theo_x = 960.0
+    $ theo_y = 800.0
+    $ lunch_played = []
+
+label explore_lunch_loop:
+    call screen explore_scene("bg, lunch", LUNCH_SPOTS)
+    if _return == "done":
+        return
+    call expression _return
+    if len(set(lunch_played)) >= len(LUNCH_SPOTS):
+        return
+    jump explore_lunch_loop
 
 label naptime:
     #===== ACT IV-C: Naptime! =====
@@ -361,8 +522,29 @@ label snow_day:
     t "She's got a cape!"
     kid_iris "...She's a superhero."
     t "I'm putting it on my wall. Thank you, Iris!"
-    #TO DO: MINIGAME - SNOW DAY INDOOR PLAY
+    call explore_recess
+    scene black with fade
     jump pickup
+
+label explore_recess:
+    $ explore_time = 0.0
+    $ explore_limit = 120.0
+    $ room_left = 0
+    $ room_right = 1920
+    $ theo_x = 960.0
+    $ theo_y = 800.0
+    $ target_x = 960.0
+    $ target_y = 800.0
+    $ recess_played = []
+
+label explore_recess_loop:
+    call screen explore_scene("bg_classroom", RECESS_SPOTS)
+    if _return == "done":
+        return
+    call expression _return
+    if len(set(recess_played)) >= len(RECESS_SPOTS):
+        return
+    jump explore_recess_loop
 
 label pickup:
     #===== ACT VI: Pickup Time! =====
@@ -386,10 +568,9 @@ label getting_ready:
     tess "Go change into your birthday outfit! I'll be right here!"
     t "What outfit?"
     tess "It's on your bed. It's got something extra special on it."
-    #TODO: Exploration, bedroom again but husky follows theo
-    #TODO minigame - timed play w husky
-    #TODO dresser interaction (aka continue)
-    # $theo_outfit = "party"
+    call explore_getready
+    scene black with fade
+    # $ theo_outfit = "party"
 
     t "Tessa, look! I'm the birthday boy! It says so!"
     t "[husky_name]! look! Do I look fancy?"
@@ -399,6 +580,24 @@ label getting_ready:
     t "Why?"
     tess "No questions, buddy,"
     jump party
+
+label explore_getready:
+    $ explore_time = 0.0
+    $ explore_limit = 9999.0
+    $ bedroom_done = False
+    $ room_left = 320
+    $ room_right = 1600
+    $ theo_x = 960.0
+    $ theo_y = 800.0
+    $ target_x = 960.0
+    $ target_y = 800.0
+
+label explore_getready_loop:
+    call screen explore_scene("theo-room", GETREADY_SPOTS)
+    call expression _return
+    if not bedroom_done:
+        jump explore_getready_loop
+    return
 
 label party:
     scene black with fade
@@ -420,10 +619,10 @@ label party:
     t "Tessa, did you see?! They sang to ME!"
     tess "I saw, little guy. Make a wish."
 
-    # TODO: EXPLORATION - playing in the snow with friends (and the husky!)
-    kid_fern "Look, Theo! A snow angel!"
-    kid_ruby "I'm the best at snowballs."
-    kid_sunny "Hehehe, SNOW."
+    t "Can we go play in the SNOW?!"
+    tess "Go on. Everybody's waiting."
+    call explore_snow
+    scene black with fade
 
     # presents
     kid_blue "Here, Theo! I picked this one just for you."
@@ -539,6 +738,31 @@ label tessa_world:
     "It's a big world, Little Guy.."
     return
 
+#Exploration labels
+
+label explore_snow:
+    $ explore_time = 0.0
+    $ explore_limit = 120.0
+    $ room_left = 0
+    $ room_right = 1920
+    $ theo_x = 960.0
+    $ theo_y = 800.0
+    $ target_x = 960.0
+    $ target_y = 800.0
+    $ snow_played = []
+
+label explore_snow_loop:
+    call screen explore_scene("bg_snowyard", SNOW_SPOTS)
+
+    if _return == "done":
+        return
+
+    call expression _return
+
+    if len(set(snow_played)) >= len(SNOW_SPOTS):
+        return
+    jump explore_snow_loop
+
 label look_snowman:
     t "A snowman!! He's got a carrot nose!!"
     t "He's HUGE. He's even bigger than tessa!"
@@ -612,4 +836,238 @@ label look_photo:
     t "That's me and Tessa!"
     t "She's holding me up like a trophy."
     t "I was SO tiny. Now I'm four!"
+    return
+
+label snow_angel:
+    kid_fern "Theo, lie down! Like this! Then move your arms!"
+    t "I'm making wings!"
+    call minigame_snow_angel
+    $ snow_played.append("snowangel")
+    kid_fern "That's the best angel I've ever seen."
+    return
+
+label snow_ball:
+    kid_ruby "I'm the best at snowballs. Bet you can't hit the tree!"
+    t "Watch me!"
+    call minigame_snowball
+    $ snow_played.append("snowball")
+    kid_ruby "...Okay. That was a good one."
+    return
+
+label snow_fort:
+    kid_blue "Theo! Help me build the for! IT needs a door!"
+    t "And a tower! And a flag!"
+    call minigame_fort
+    $ snow_played.append("fort")
+    kid_blue "Best fort ever."
+    return
+
+label snow_draw:
+    kid_iris "... I'm drawing in the snow with a stick."
+    t "Is that [husky_name]?"
+    kid_iris "... Yes."
+    call minigame_snow_draw
+    $ snow_played.append("snowdraw")
+    return
+
+label snow_sled:
+    kid_sunny "Hehehe, the hill is SO slippery!"
+    t "Can I go next?"
+    call minigame_sled
+    $ snow_played.append("sled")
+    kid_sunny "Hehehehe, again, again!"
+    return
+
+label snow_husky:
+    t "[husky_name]! He's covered in snow!"
+    t "He looks like a snowman with ears."
+    call minigame_husky_fetch
+    $ snow_played.append("husky")
+    t "Good boy, [husky_name]!"
+    return
+
+label snow_rocks:
+    kid_max "I'm looking for rocks. Under the snow."
+    t "Did you find one?"
+    kid_max "...Not yet."
+    call minigame_rocks
+    $ snow_played.append("rockhunt")
+    kid_max "Found one. It's cold."
+    return
+
+label minigame_snow_angel:
+    call play_tap("Wave your arms to make the wings!", 12)
+    return
+
+label minigame_snowball:
+    call play_timing("Throw when the marker is in the green!", 0.18, 0.9)
+    return
+
+label minigame_fort:
+    call play_tap("Pack the snow to build the fort!", 14)
+    return
+
+label minigame_snow_draw:
+    call play_tap("Draw in the snow with the stick!", 8)
+    return
+
+label minigame_sled:
+    call play_catch("Grab the sled as it slides past!", 4)
+    return
+
+label minigame_husky_fetch:
+    call play_catch("Grab the sled as it slides past!", 4)
+    return
+
+label minigame_rocks:
+    call play_find("Which snowdrift has Max's rock?", 5)
+    return
+
+label look_drawing:
+    t "Iris's drawing! I put it on my wall!"
+    t "That's me. That's tessa. She's got a cape!"
+    t "...She really is a superhero."
+    return
+
+label lunch_cupcake:
+    t "My cupcakeI It's got sprinkles AND a candle!"
+    kid_penny "You have to wait to blow it out. It's a rule."
+    t "I'm waiting. I'm REALLY waiting."
+    call minigame_cupcake
+    $ lunch_played.append("cupcake")
+    kid_penny "Okay. Now you can."
+    return
+
+label lunch_box:
+    t "Bunny's in my bag, but Tessa packed me snacks too!"
+    kid_blue "Wanna trade? I have crackers."
+    t "I have... a mysery sandwich."
+    call minigame_trade_snacks
+    $ lunch_played.append("lunchbox")
+    kid_blue "That was a good trade."
+    return
+
+label lunch_oliver:
+    kid_oliver "Is there pizza under the table?"
+    t "Oliver, that's the floor."
+    kid_oliver "...Pizza could be the floor."
+    call minigame_pizza_hunt
+    $ lunch_played.append("oliver")
+    kid_oliver "...No pizza. But I found a crayon."
+    return
+
+label lunch_milk:
+    kid_sunny "Hehehe, watch me pour my own milk!"
+    t "Don't spill it!"
+    call minigame_milk
+    $ lunch_played.append("milk")
+    kid_sunny "Hehehe, I spilled it a little."
+    return
+
+label lunch_rock:
+    kid_max "This is my rock. He's eating lunch too."
+    t "What does he eat?"
+    kid_max "...Rocks."
+    $ lunch_played.append("rock")
+    return
+
+label lunch_ruby:
+    kid_ruby "I'm the like leader, so I get the first napkin."
+    t "That's not a rule."
+    kid_ruby "It's MY rule."
+    $ lunch_played.append("ruby")
+    return
+
+label recess_blocks:
+    kid_ruby "I'm in charge of the blocks! Hand me a red one."
+    t "I'm building a tower for Tessa!"
+    call minigame_blocks
+    $ recess_played.append("blocks")
+    kid_ruby "That's almost as tall as me."
+    return
+
+label recess_fort:
+    kid_blue "Theo! Help me with the pillow fort!"
+    t "It need a door! And a flag!"
+    call minigame_pillow_fort
+    $ recess_played.append("fort")
+    kid_blue "Best fort ever."
+    return
+
+label recess_mountain:
+    t "This pillow is a mountain! I'm gonna climb it!"
+    call minigame_mountain
+    $ recess_played.append("mountain")
+    t "I'm the king of the mountain!"
+    return
+
+label recess_cave:
+    kid_sunny "Hehehe, come in the cave!"
+    t "It's dark in here!"
+    kid_sunny "Hehehehe, that's the table."
+    call minigame_cave
+    $ recess_played.append("cave")
+    return
+
+label recess_coloring: 
+    kid_iris "...Want to color with me?"
+    t "Can I make tessa a card?"
+    kid_iris "...Yes."
+    call minigame_coloring
+    $ recess_played.append("coloring")
+    kid_iris "...It's a good card."
+    return
+
+label recess_window:
+    kid_fern "It's still snowing."
+    t "It's like the sky is a snow globe!"
+    kid_fern "...I wish we could go out."
+    $ recess_played.append("window")
+    return
+
+label look_husky_play:
+    t "[husky_name]! Come here!"
+    t "Do you want to see my fancy birthday outfit?"
+    call minigame_husky_play
+    t "He says I look fancy."
+    return
+
+label minigame_cupcake:
+    call play_timing("Blow out the candle when the marker hits green!", 0.25, 0.5)
+    return
+
+label minigame_trade_snacks:
+    call play_tap("Pass the snacks back and forth!", 6)
+    return
+
+label minigame_pizza_hunt:
+    call play_find("Which spot has the pizza?", 5)
+    return
+
+label minigame_milk:
+    call play_timing("Stop pouring at just the right moment!", 0.2, 0.7)
+    return
+
+label minigame_blocks:
+    call play_timing("Place the block when it lines up!", 0.2, 0.8)
+    return
+
+label minigame_pillow_fort:
+    call play_tap("Stack the pillows for the fort", 12)
+    return
+
+label minigame_mountain:
+    call play_tap("Climb the pillow mountain!", 12)
+    return
+
+label minigame_cave:
+    call play_find("Which way out of the cave?", 4)
+    return
+
+label minigame_coloring:
+    call play_tap("Color in the card for Tessa!", 10)
+    return
+
+label minigame_husky_play:
+    call play_catch("Pet [husky_name] when he zooms by!", 5)
     return
